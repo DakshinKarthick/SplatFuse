@@ -1,0 +1,11 @@
+# Phase 3 · training deps (STUB — pin versions once you pick your GPU route)
+#
+# NVIDIA / cloud: install the CUDA build of torch.
+# AMD RX 7600 (local): install the ROCm build of torch on Linux, e.g.
+#   pip install torch --index-url https://download.pytorch.org/whl/rocm6.1
+# (ROCm PyTorch is Linux-only; on Windows use WSL2 or a cloud NVIDIA GPU.)
+
+torch
+numpy
+pillow
+tqdm

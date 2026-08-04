@@ -1,0 +1,20 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>SplatFuse · Hybrid WebGPU 3DGS</title>
+    <style>
+      html, body { margin: 0; height: 100%; background: #05070b; overflow: hidden; }
+      canvas { display: block; }
+      #status { position: fixed; inset: 12px auto auto 12px; color: #a7f3d0;
+        background: #07110ddd; border: 1px solid #164e3b; border-radius: 6px;
+        padding: 8px 10px; font: 12px/1.5 ui-monospace, monospace; white-space: pre-wrap; }
+    </style>
+  </head>
+  <body>
+    <canvas class="webgl"></canvas>
+    <output id="status">Starting SplatFuse…</output>
+    <script type="module" src="/src/main.js"></script>
+  </body>
+</html>

@@ -1,0 +1,37 @@
+# Captured data & trained outputs (large binaries — keep out of git)
+data/
+scenes/
+*.ply
+*.splat
+
+# Phase 0 reference tools & I/O — large binaries / user media, recreate via README
+phase0-capture/01 COLMAP/
+phase0-capture/02 VIDEOS/
+phase0-capture/03 FFMPEG/
+phase0-capture/04 SCENES/
+phase0-capture/colmap-*.zip
+
+# JS / Vite
+node_modules/
+dist/
+.vite/
+
+# Python
+.venv/
+venv/
+__pycache__/
+*.pyc
+
+# CUDA / CMake build
+build/
+*.o
+*.obj
+*.exe
+
+# Editor / OS
+.vscode/
+.idea/
+.DS_Store
+Thumbs.db
+
+upload.zip
