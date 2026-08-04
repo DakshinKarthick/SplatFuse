@@ -1,11 +1,12 @@
 import assert from 'node:assert/strict'
 import test from 'node:test'
-import { alignTo, nextPowerOfTwo, packSplats, SPLAT_STRIDE } from '../src/webgpu/layout.js'
+import { alignTo, nextPowerOfTwo, packSplats, previousPowerOfTwo, SPLAT_STRIDE } from '../src/webgpu/layout.js'
 
 test('alignment and sort capacity helpers', () => {
   assert.equal(alignTo(65, 16), 80)
   assert.equal(nextPowerOfTwo(1), 1)
   assert.equal(nextPowerOfTwo(5_000_000), 8_388_608)
+  assert.equal(previousPowerOfTwo(5_000_000), 4_194_304)
 })
 
 test('packs one aligned Gaussian record', () => {

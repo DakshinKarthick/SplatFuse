@@ -12,6 +12,11 @@ export function nextPowerOfTwo(value) {
   return 2 ** Math.ceil(Math.log2(value))
 }
 
+export function previousPowerOfTwo(value) {
+  if (value < 1) return 0
+  return 2 ** Math.floor(Math.log2(value))
+}
+
 /**
  * Convert structure-of-arrays PLY output into a WGSL-friendly array-of-structs.
  * Every record is four vec4<f32>s (64 bytes): center/opacity, scale/pad,
