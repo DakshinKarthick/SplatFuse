@@ -9,7 +9,8 @@
     "build": "vite build",
     "preview": "vite preview",
     "test": "node --test",
-    "model:fit": "node scripts/fit-model.mjs"
+    "model:fit": "node scripts/fit-model.mjs",
+    "smoke:webgpu": "node screenshot.mjs"
   },
   "dependencies": {
     "puppeteer": "^25.3.0",

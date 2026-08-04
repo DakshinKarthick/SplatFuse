@@ -45,8 +45,9 @@ export class SceneBuffers {
   }
 
   destroy() {
-    for (const value of Object.values(this)) {
-      if (value && typeof value.destroy === 'function') value.destroy()
-    }
+    for (const name of [
+      'splats', 'projected', 'tileCounts', 'tileOffsets', 'activeIds',
+      'globalKeys', 'globalValues', 'stats', 'indirectDraw',
+    ]) this[name].destroy()
   }
 }

@@ -10,7 +10,11 @@ export class GpuContext {
 
     const supportsTimestamps = adapter.features.has('timestamp-query')
     const requiredFeatures = supportsTimestamps ? ['timestamp-query'] : []
-    const device = await adapter.requestDevice({ requiredFeatures })
+    const requiredLimits = {
+      maxBufferSize: adapter.limits.maxBufferSize,
+      maxStorageBufferBindingSize: adapter.limits.maxStorageBufferBindingSize,
+    }
+    const device = await adapter.requestDevice({ requiredFeatures, requiredLimits })
     const adapterInfo = adapter.info || {}
 
     const instance = new GpuContext(canvas, adapter, device, adapterInfo, supportsTimestamps)
