@@ -127,6 +127,11 @@ export async function loadSplats(url) {
 
   const { headerEnd, count, stride, offsets } = parseHeader(bytes)
 
+  const requiredBytes = headerEnd + count * stride
+  if (requiredBytes > buffer.byteLength) {
+    throw new Error(`truncated ply: expected ${requiredBytes} bytes, received ${buffer.byteLength}`)
+  }
+
   // Resolve the byte offset of every field we care about, once, up front.
   // `need` throws a clear error if the file is missing a field we assume exists.
   const need = (name) => {
