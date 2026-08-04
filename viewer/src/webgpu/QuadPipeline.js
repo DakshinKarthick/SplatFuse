@@ -1,5 +1,6 @@
 import quadShader from './shaders/quad.wgsl?raw'
 import { GpuBitonicSort } from './GpuBitonicSort.js'
+import { timedPassDescriptor } from './Telemetry.js'
 
 /** Globally depth-sorted instanced quads with premultiplied hardware blending. */
 export class QuadPipeline {
@@ -39,13 +40,13 @@ export class QuadPipeline {
     })
   }
 
-  encodeSort(encoder) {
-    this.sorter.encode(encoder, this.sortBindings, 'quad global far-to-near sort')
+  encodeSort(encoder, telemetry) {
+    this.sorter.encode(encoder, this.sortBindings, 'quad.sort', telemetry)
   }
 
-  encodeRender(encoder, targetView, clearValue = { r: 0, g: 0, b: 0, a: 1 }) {
+  encodeRender(encoder, targetView, clearValue = { r: 0, g: 0, b: 0, a: 1 }, telemetry) {
     const pass = encoder.beginRenderPass({
-      label: 'hardware quad rasterization',
+      ...timedPassDescriptor(telemetry, 'quad.raster'),
       colorAttachments: [{ view: targetView, clearValue, loadOp: 'clear', storeOp: 'store' }],
     })
     pass.setPipeline(this.pipeline)
@@ -54,8 +55,8 @@ export class QuadPipeline {
     pass.end()
   }
 
-  encode(encoder, targetView, clearValue) {
-    this.encodeSort(encoder)
-    this.encodeRender(encoder, targetView, clearValue)
+  encode(encoder, targetView, clearValue, telemetry) {
+    this.encodeSort(encoder, telemetry)
+    this.encodeRender(encoder, targetView, clearValue, telemetry)
   }
 }

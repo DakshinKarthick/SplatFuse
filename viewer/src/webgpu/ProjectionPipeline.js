@@ -1,5 +1,6 @@
 import projectionShader from './shaders/projection.wgsl?raw'
 import { TILE_SIZE } from './layout.js'
+import { timedPassDescriptor } from './Telemetry.js'
 
 const CAMERA_BYTES = 224
 
@@ -63,14 +64,14 @@ export class ProjectionPipeline {
     this.device.queue.writeBuffer(this.camera, 0, raw)
   }
 
-  encode(encoder) {
-    let pass = encoder.beginComputePass({ label: 'reset projection outputs' })
+  encode(encoder, telemetry) {
+    let pass = encoder.beginComputePass(timedPassDescriptor(telemetry, 'projection.reset'))
     pass.setPipeline(this.resetPipeline)
     pass.setBindGroup(0, this.resetBindGroup)
     pass.dispatchWorkgroups(Math.ceil(Math.max(this.scene.count, this.scene.sortCapacity) / 256))
     pass.end()
 
-    pass = encoder.beginComputePass({ label: '3D covariance projection and culling' })
+    pass = encoder.beginComputePass(timedPassDescriptor(telemetry, 'projection.project-cull'))
     pass.setPipeline(this.projectionPipeline)
     pass.setBindGroup(0, this.projectionBindGroup)
     pass.dispatchWorkgroups(Math.ceil(this.scene.count / 256))

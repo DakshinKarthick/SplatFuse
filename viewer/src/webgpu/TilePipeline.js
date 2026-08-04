@@ -3,6 +3,7 @@ import presentShader from './shaders/present.wgsl?raw'
 import { GpuBitonicSort } from './GpuBitonicSort.js'
 import { TileBinningFrontend } from './TileBinningFrontend.js'
 import { TILE_SIZE } from './layout.js'
+import { timedPassDescriptor } from './Telemetry.js'
 
 const STORAGE = GPUBufferUsage.STORAGE | GPUBufferUsage.COPY_SRC | GPUBufferUsage.COPY_DST
 
@@ -85,12 +86,12 @@ export class TilePipeline {
     })
   }
 
-  encode(encoder, targetView) {
+  encode(encoder, targetView, telemetry) {
     if (!this.output) throw new Error('TilePipeline.resize must be called before encode.')
-    this.frontend.encode(encoder)
-    this.sorter.encode(encoder, this.sortBindings, 'tile front-to-back key sort')
+    this.frontend.encode(encoder, telemetry)
+    this.sorter.encode(encoder, this.sortBindings, 'tile.sort', telemetry)
 
-    let pass = encoder.beginComputePass({ label: 'tile range reset and detection' })
+    let pass = encoder.beginComputePass(timedPassDescriptor(telemetry, 'tile.ranges'))
     pass.setPipeline(this.resetPipeline)
     pass.setBindGroup(0, this.resetBindings)
     pass.dispatchWorkgroups(Math.ceil((this.tilesX * this.tilesY) / 256))
@@ -99,14 +100,14 @@ export class TilePipeline {
     pass.dispatchWorkgroups(Math.ceil(this.frontend.capacity / 256))
     pass.end()
 
-    pass = encoder.beginComputePass({ label: '16x16 cooperative tile rasterization' })
+    pass = encoder.beginComputePass(timedPassDescriptor(telemetry, 'tile.raster'))
     pass.setPipeline(this.rasterPipeline)
     pass.setBindGroup(0, this.rasterBindings)
     pass.dispatchWorkgroups(this.tilesX, this.tilesY)
     pass.end()
 
     const present = encoder.beginRenderPass({
-      label: 'present compute tile output',
+      ...timedPassDescriptor(telemetry, 'tile.present'),
       colorAttachments: [{
         view: targetView, clearValue: { r: 0, g: 0, b: 0, a: 1 }, loadOp: 'clear', storeOp: 'store',
       }],

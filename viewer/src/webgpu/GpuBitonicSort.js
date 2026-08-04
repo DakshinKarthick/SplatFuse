@@ -1,5 +1,6 @@
 import bitonicShader from './shaders/bitonic-sort.wgsl?raw'
 import { bitonicStages } from './sortPlan.js'
+import { timedPassDescriptor } from './Telemetry.js'
 
 /** Portable WGSL key/value sort; vec2 keys are ordered high-word then low-word. */
 export class GpuBitonicSort {
@@ -56,9 +57,9 @@ export class GpuBitonicSort {
     })
   }
 
-  encode(encoder, bindGroup, label = 'GPU bitonic sort') {
+  encode(encoder, bindGroup, label = 'sort.bitonic', telemetry) {
     if (this.capacity <= 1) return
-    const pass = encoder.beginComputePass({ label })
+    const pass = encoder.beginComputePass(timedPassDescriptor(telemetry, label))
     pass.setPipeline(this.pipeline)
     const workgroups = Math.ceil(this.capacity / 256)
     for (let i = 0; i < this.stages.length; i++) {

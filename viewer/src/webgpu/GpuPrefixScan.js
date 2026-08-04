@@ -1,4 +1,5 @@
 import scanShader from './shaders/prefix-scan.wgsl?raw'
+import { timedPassDescriptor } from './Telemetry.js'
 
 const STORAGE = GPUBufferUsage.STORAGE | GPUBufferUsage.COPY_SRC | GPUBufferUsage.COPY_DST
 
@@ -61,8 +62,8 @@ export class GpuPrefixScan {
     }
   }
 
-  encode(encoder) {
-    let pass = encoder.beginComputePass({ label: 'hierarchical exclusive prefix scan' })
+  encode(encoder, telemetry) {
+    let pass = encoder.beginComputePass(timedPassDescriptor(telemetry, 'tile.prefix-scan'))
     pass.setPipeline(this.scanPipeline)
     for (const level of this.levels) {
       pass.setBindGroup(0, level.scanBindings)
@@ -71,7 +72,7 @@ export class GpuPrefixScan {
     pass.end()
 
     if (this.levels.length > 1) {
-      pass = encoder.beginComputePass({ label: 'propagate scanned block offsets' })
+      pass = encoder.beginComputePass(timedPassDescriptor(telemetry, 'tile.prefix-add'))
       pass.setPipeline(this.addPipeline)
       for (let i = this.levels.length - 2; i >= 0; i--) {
         const level = this.levels[i]

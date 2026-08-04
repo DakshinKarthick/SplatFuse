@@ -1,6 +1,7 @@
 import binningShader from './shaders/tile-binning.wgsl?raw'
 import { GpuPrefixScan } from './GpuPrefixScan.js'
 import { nextPowerOfTwo, previousPowerOfTwo } from './layout.js'
+import { timedPassDescriptor } from './Telemetry.js'
 
 const STORAGE = GPUBufferUsage.STORAGE | GPUBufferUsage.COPY_SRC | GPUBufferUsage.COPY_DST
 
@@ -52,16 +53,16 @@ export class TileBinningFrontend {
     })
   }
 
-  encode(encoder) {
-    let pass = encoder.beginComputePass({ label: 'reset tile key/value bins' })
+  encode(encoder, telemetry) {
+    let pass = encoder.beginComputePass(timedPassDescriptor(telemetry, 'tile.bin-reset'))
     pass.setPipeline(this.resetPipeline)
     pass.setBindGroup(0, this.resetBindings)
     pass.dispatchWorkgroups(Math.ceil(this.capacity / 256))
     pass.end()
 
-    this.scan.encode(encoder)
+    this.scan.encode(encoder, telemetry)
 
-    pass = encoder.beginComputePass({ label: 'duplicate splats into touched tiles' })
+    pass = encoder.beginComputePass(timedPassDescriptor(telemetry, 'tile.duplicate'))
     pass.setPipeline(this.binPipeline)
     pass.setBindGroup(0, this.binBindings)
     pass.dispatchWorkgroups(Math.ceil(this.scene.count / 256))
