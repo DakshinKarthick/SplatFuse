@@ -14,8 +14,8 @@ struct Splat2D {
 };
 
 @group(1) @binding(0) var<storage, read> splats2D: array<Splat2D>;
-@group(1) @binding(1) var<storage, read> tileSplatIndices: array<u32>; // Pre-sorted indices for this tile
-@group(1) @binding(2) var<storage, read> tileOffsets: array<u32>; // Start index and count per tile
+@group(1) @binding(1) var<storage, read> instanceValues: array<u32>;
+@group(1) @binding(2) var<storage, read> tileOffsets: array<u32>; // [start, end] per tile
 
 @group(2) @binding(0) var outputTexture: texture_storage_2d<rgba8unorm, write>;
 
@@ -33,21 +33,19 @@ fn main(
     let tiles_x = (uniforms.screenWidth + 15u) / 16u;
     let tile_idx = tile_id.y * tiles_x + tile_id.x;
 
-    // To implement real tile-based rasterization:
-    // We would fetch the start and end of the sorted splats for this tile.
-    // For scaffolding, assume tileOffsets[tile_idx] stores the start and tileOffsets[tile_idx + 1] is end.
-    let start_idx = tileOffsets[tile_idx];
-    let end_idx = tileOffsets[tile_idx + 1u];
+    let start_idx = tileOffsets[tile_idx * 2u];
+    let end_idx = tileOffsets[tile_idx * 2u + 1u];
 
     var final_color = vec3<f32>(0.0, 0.0, 0.0);
     var transmittance = 1.0;
     
     let pixel_coord = vec2<f32>(f32(px) + 0.5, f32(py) + 0.5);
 
-    for (var i = start_idx; i < end_idx; i = i + 1u) {
-        if (transmittance < 0.01) { break; }
-        
-        let s_idx = tileSplatIndices[i];
+    if (start_idx != 0xFFFFFFFFu) {
+        for (var i = start_idx; i < end_idx; i = i + 1u) {
+            if (transmittance < 0.01) { break; }
+            
+            let s_idx = instanceValues[i];
         let splat = splats2D[s_idx];
 
         let d = pixel_coord - splat.xy;
@@ -62,6 +60,7 @@ fn main(
         
         final_color += splat.color.rgb * alpha * transmittance;
         transmittance = test_t;
+        }
     }
 
     final_color += vec3<f32>(0.1, 0.1, 0.1) * transmittance; // Background color
