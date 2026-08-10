@@ -1,8 +1,13 @@
-# Gaussian Splat Viewer: `viewer/src` Complete Walkthrough
+# Legacy WebGL Viewer Walkthrough (Archived)
 
-> A code-first explanation of how the browser viewer loads a binary PLY file, turns every Gaussian into GPU attributes, sorts transparent splats in a background worker, and renders soft billboards with GLSL shaders.
+> **Status:** historical reference only. The active viewer is the native WebGPU
+> implementation in `viewer/src/main.js` and `viewer/src/webgpu/`. Its current,
+> verified architecture is documented in `../IMPLEMENTATION.md`. The WebGL
+> material, GLSL shaders, and CPU sort worker described below remain in the
+> repository as legacy learning code but are not imported by the active entry.
 
-This guide matches the source as it exists on **2026-08-04**. Line numbers refer to:
+This guide records the pre-WebGPU source snapshot from **2026-08-04**. Its line
+numbers do not describe the current `main.js`; they refer to the archived design:
 
 - `viewer/src/main.js` (264 lines)
 - `viewer/src/SplatLoader.js` (189 lines)
@@ -1857,4 +1862,3 @@ The shortest useful mental sentence is:
 | Premultiplied alpha | RGB already multiplied by alpha before blending |
 | Frustum culling | Skipping objects believed to be outside the camera view |
 | Backpressure | Preventing stale sort requests from piling up |
-

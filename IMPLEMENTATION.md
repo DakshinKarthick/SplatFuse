@@ -363,6 +363,36 @@ update camera
 
 No scene buffer is reloaded and no PLY data returns to the CPU when paths switch.
 
+## 11A. CUDA training application
+
+`trainer/train.py` is now a complete COLMAP-to-PLY training application. It
+discovers the Phase-0 reconstruction (preferring the largest model exported
+directly into `sparse/`), parses TXT without extra bindings or binary through
+`pycolmap`, validates registered images, corrects supported lens distortion,
+and scales each intrinsic matrix with its prepared image.
+
+Sparse points initialize world-space means, nearest-neighbor log-scales,
+identity WXYZ quaternions, opacity logits, and spherical-harmonic coefficients.
+The per-view loop calls the pinned `gsplat==1.5.3` differentiable CUDA
+rasterizer, minimizes `0.8 L1 + 0.2 (1 - SSIM)`, steps named Adam optimizers,
+decays the means learning rate, and performs gradient-driven clone/split plus
+opacity/size pruning. A local workaround restores the opacity reset that
+gsplat 1.5.3 skips because of its published operator-precedence typo.
+
+Lifecycle behavior includes deterministic train/validation splitting, bounded
+image caching, SH-degree scheduling, non-finite guards, a conservative Gaussian
+count ceiling, validation PSNR/SSIM, preview images, JSONL metrics, atomic PLY
+and checkpoint writes, safe-boundary SIGINT/SIGTERM checkpoints, full
+optimizer/strategy and RNG resume state, dataset fingerprinting, and optional
+publication into `viewer/public/scenes/`. CUDA OOM never serializes potentially
+mixed in-flight state; recovery uses the newest prior completed checkpoint.
+
+The CUDA boundary is deliberately explicit: training uses gsplat's maintained
+forward/backward kernels. It does **not** use `renderer-cuda`, because that
+target has no implemented backward kernel or PyTorch extension. CPU-safe
+parser/math/lifecycle tests run on this computer; the full kernel path still
+requires the planned NVIDIA acceptance run.
+
 ## 12. Tests and verification
 
 From `viewer/`:
@@ -371,6 +401,14 @@ From `viewer/`:
 npm test
 npm run build
 npm run smoke:webgpu
+```
+
+From the repository root, trainer checks that do not require NVIDIA are:
+
+```powershell
+python trainer/train.py --doctor
+python trainer/train.py --self-test
+python -m unittest trainer.test_train -v
 ```
 
 The Node tests cover aligned packing, power-of-two capacities, bitonic stage and
@@ -393,8 +431,10 @@ target hardware tier. Timestamp availability must be recorded with every row.
 
 ## 13. Known limits and honest research notes
 
-1. **CUDA/HIP was not run here.** The existing `renderer-cuda` blueprint is kept
-   as the algorithmic reference. Validate it on the other PC as planned.
+1. **CUDA/HIP was not run here.** The gsplat-backed trainer is implemented but
+   its full raster/backward path still needs the documented NVIDIA acceptance
+   run. The separate `renderer-cuda` blueprint remains a forward-only
+   algorithmic reference and is not the trainer backend.
 2. **Bitonic is the portable baseline, not the final throughput winner.** It is
    fully GPU-side and fairer than the old CPU worker, but its `O(M log²M)` cost is
    expected to be visible at multi-million capacity. A radix implementation is a

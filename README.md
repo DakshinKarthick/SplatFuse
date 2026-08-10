@@ -38,9 +38,32 @@ JSON with `npm run model:fit -- benchmark.json model.json`.
 | Web viewer | `viewer/src/main.js` | Scene load, camera, controls, live HUD |
 | CUDA reference | `renderer-cuda/` | Original algorithmic forward-pass blueprint |
 | Capture | `phase0-capture/` | Completed COLMAP workflow |
-| Training | `trainer/` | Existing training foundation |
+| Training | `trainer/` | COLMAP-to-PLY CUDA trainer using differentiable gsplat |
 | Full implementation notes | `IMPLEMENTATION.md` | Ten stages, data layouts, pass-by-pass explanation |
 
-CUDA and HIP are intentionally not validated on this machine. WebGPU is the
-active implementation target; see `IMPLEMENTATION.md` for tested scope and known
-limits.
+## Train a scene
+
+Training requires an NVIDIA CUDA computer. This AMD development PC can validate
+the trainer and a dataset without starting a GPU run:
+
+```powershell
+python trainer/train.py --doctor
+python trainer/train.py --self-test
+python -m unittest trainer.test_train -v
+```
+
+On the NVIDIA computer, install the pinned stack described in
+`trainer/README.md`, then run:
+
+```bash
+python trainer/train.py --data /data/scene \
+  --output-dir trainer/runs/scene \
+  --viewer-ply viewer/public/scenes/scene.ply \
+  --iterations 30000 --downscale 2
+```
+
+The trainer uses gsplat's differentiable CUDA rasterizer/backward pass. The
+repository's educational `renderer-cuda/` target is still a standalone,
+unvalidated forward prototype; its `backward.cu` and PyTorch extension are not
+implemented. CUDA and HIP therefore remain unvalidated on this machine. See
+`IMPLEMENTATION.md` and `trainer/README.md` for the exact tested boundary.

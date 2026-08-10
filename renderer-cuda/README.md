@@ -1,5 +1,13 @@
 # 3D Gaussian Splatting CUDA Renderer
 
+> **Status: experimental forward-only algorithm reference.** This target has
+> not been compiled or validated on the AMD development PC. `backward.cu` is a
+> stub, there is no PyTorch extension, and this code is **not** used by
+> `trainer/train.py`; the production training boundary is pinned `gsplat`.
+> Known forward correctness/robustness gaps are tracked in `../IMPLEMENTATION.md`
+> and the Y4 SplatFuse handbook. Do not use this executable for training or as a
+> production renderer until it passes the NVIDIA validation matrix.
+
 This repository implements a forward-pass renderer for 3D Gaussian Splatting using CUDA. It transforms 3D point clouds (splats) into a 2D image via tiled rasterization. This document provides a detailed, step-by-step breakdown of the process, designed for beginners to C++ and CUDA.
 
 ## Imports and Dependencies

@@ -173,9 +173,9 @@ export async function loadSplats(url) {
     scales[i * 3 + 1] = Math.exp(view.getFloat32(base + oS1, true))
     scales[i * 3 + 2] = Math.exp(view.getFloat32(base + oS2, true))
 
-    // Rotation quaternion (w, x, y, z order in the file). Phase 1 doesn't use it
-    // yet — we draw round dots — but we parse it so it's ready for Phase 2's real
-    // ellipse projection.
+    // Rotation quaternion (w, x, y, z order in the file), loaded unchanged.
+    // The active WebGPU projection shader normalizes WXYZ before rotating the
+    // scaled covariance axes, preserving the raw file components at this boundary.
     rotations[i * 4] = view.getFloat32(base + oR0, true)
     rotations[i * 4 + 1] = view.getFloat32(base + oR1, true)
     rotations[i * 4 + 2] = view.getFloat32(base + oR2, true)
@@ -186,7 +186,7 @@ export async function loadSplats(url) {
     colors[i * 3 + 1] = clamp01(0.5 + SH_C0 * view.getFloat32(base + oDc1, true))
     colors[i * 3 + 2] = clamp01(0.5 + SH_C0 * view.getFloat32(base + oDc2, true))
 
-    // Opacity via sigmoid:  alpha = 1 / (1 + e^-raw)  → squashes any real number into 0..1.
+    // Opacity via sigmoid: alpha = 1 / (1 + e^-raw), mapping any real number into 0..1.
     opacities[i] = 1 / (1 + Math.exp(-view.getFloat32(base + oOpacity, true)))
   }
 

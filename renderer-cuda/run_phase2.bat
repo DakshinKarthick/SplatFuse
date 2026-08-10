@@ -4,19 +4,18 @@ setlocal enabledelayedexpansion
 :: ============================================================================
 :: PHASE 2 AUTOMATION & DEPENDENCY BOOTSTRAPPER
 :: ============================================================================
-:: INSTRUCTIONS:
-:: 1. Open this file in Notepad.
-:: 2. Set the PROJECT_DIR variable below to your project's absolute path.
-:: 3. Double-click to run on your GPU PC.
+:: EXPERIMENTAL FORWARD-ONLY REFERENCE. This target is not the trainer backend;
+:: backward.cu and the PyTorch binding remain unimplemented.
+:: Double-click this script from anywhere on the NVIDIA GPU PC.
 :: ============================================================================
 
-:: EDIT THIS PATH TO POINT TO YOUR PROJECT ROOT ON THE TARGET PC:
-set "PROJECT_DIR=C:\lol\Proj\GaussianSplat"
+:: Resolve the repository root from renderer-cuda\run_phase2.bat itself.
+for %%I in ("%~dp0..") do set "PROJECT_DIR=%%~fI"
 
 echo [1/6] Verifying Project Directory...
 if not exist "%PROJECT_DIR%" (
     echo [ERROR] Project directory "%PROJECT_DIR%" does not exist.
-    echo Please open this file in Notepad and edit the PROJECT_DIR path.
+    echo The repository-relative path could not be resolved.
     pause
     exit /b 1
 )
@@ -130,10 +129,10 @@ if %errorlevel% equ 0 (
 echo Compiling directly with NVCC...
 if "%COMPILER_FOUND%"=="2" (
     :: MinGW g++ fallback
-    nvcc -O3 -std=c++17 -ccbin g++ src\main.cpp src\forward.cu -o build\renderer.exe
+    nvcc -O3 -std=c++17 -ccbin g++ src\main.cpp src\forward.cu src\backward.cu -o build\renderer.exe
 ) else (
     :: Default/MSVC fallback
-    nvcc -O3 -std=c++17 src\main.cpp src\forward.cu -o build\renderer.exe
+    nvcc -O3 -std=c++17 src\main.cpp src\forward.cu src\backward.cu -o build\renderer.exe
 )
 
 if %errorlevel% equ 0 (

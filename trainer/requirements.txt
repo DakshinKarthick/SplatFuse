@@ -1,11 +1,19 @@
-# Phase 3 · training deps (STUB — pin versions once you pick your GPU route)
+# Reproducible SplatFuse trainer stack (Python 3.10/3.11 recommended).
 #
-# NVIDIA / cloud: install the CUDA build of torch.
-# AMD RX 7600 (local): install the ROCm build of torch on Linux, e.g.
-#   pip install torch --index-url https://download.pytorch.org/whl/rocm6.1
-# (ROCm PyTorch is Linux-only; on Windows use WSL2 or a cloud NVIDIA GPU.)
+# IMPORTANT: install the CUDA 12.4 PyTorch wheel on the NVIDIA machine first:
+#   python -m pip install torch==2.4.1 torchvision==0.19.1 \
+#     --index-url https://download.pytorch.org/whl/cu124
+# The torch requirement below then validates the version without replacing the
+# already-installed +cu124 build. On this AMD development PC, the CPU wheel is
+# sufficient for --doctor, --inspect-data, --self-test, and unit tests only.
 
-torch
-numpy
-pillow
-tqdm
+torch==2.4.1
+gsplat==1.5.3
+pycolmap==3.12.6
+numpy==2.2.6
+pillow==11.3.0
+opencv-python-headless==4.12.0.88
+scikit-learn==1.7.2
+tqdm==4.67.1
+ninja==1.13.0
+packaging==25.0

@@ -43,12 +43,58 @@ Swap the poster data for your own captured photos once the sample run works end-
    ```
 5. Train:
    ```bash
-   cd trainer && pip install -r requirements.txt && python train.py
+   # Install the known-good CUDA torch wheel before the remaining pinned stack.
+   pip install torch==2.4.1 torchvision==0.19.1 \
+     --index-url https://download.pytorch.org/whl/cu124
+   pip install -r trainer/requirements.txt
+   MAX_JOBS=3 python -c \
+     "from importlib.metadata import version; from gsplat.cuda._backend import _C; print('gsplat ready:', version('gsplat'))"
+   python trainer/train.py --doctor
+   python trainer/train.py --data /data/scene \
+     --output-dir trainer/runs/scene \
+     --viewer-ply viewer/public/scenes/scene.ply \
+     --iterations 30000 --downscale 2
    ```
-   (On cloud NVIDIA, install the **CUDA** build of torch, not the ROCm one:
-   `pip install torch` from the default index.)
+   The trainer accepts the `gsplat` 1.5.3 public release and local wheel builds
+   such as `1.5.3+pt24cu124`. It uses gsplat for its differentiable CUDA
+   forward/backward path; `renderer-cuda/src/backward.cu` is not connected to
+   PyTorch. `MAX_JOBS=3` prevents first-build compiler workers from exhausting
+   host RAM.
 
-See `bootstrap.sh` for a one-shot dev-box setup you can paste onto a fresh pod.
+See `bootstrap.sh` for a one-shot dev-box setup after cloning the repository. It
+stops unless Python is supported, the gsplat CUDA backend imports, the doctor
+reports `ready_for_cuda_training: true`, and the CPU self-test passes. It sets
+up the environment but does not start a billable long training run.
+
+## Checkpoints, shutdown, and OOM recovery
+
+Put the run directory on a persistent volume. Scheduled `step-*.pt` files and
+`final.pt` contain the Gaussian tensors, all Adam/scheduler/density state, the
+completed step, and the random streams required to continue from that boundary.
+State restoration is complete, but gsplat's parallel CUDA atomic accumulation
+is not promised to be bit-for-bit deterministic across runs, drivers, or GPUs.
+Keep checkpoint permissions private to the run: PyTorch `.pt` files are trusted
+serialization artifacts and must not be accepted from an untrusted source.
+
+The first SIGINT (`Ctrl+C`) or SIGTERM requests a graceful stop. The trainer
+finishes the in-flight iteration and atomically writes `interrupted.pt` only
+after that step is complete. A second signal forces immediate exit and does not
+write a checkpoint from partial state. This helps with providers that offer a
+shutdown grace period; a hard eviction without notice can preserve only the
+latest checkpoint already on the persistent volume.
+
+Do not resume an `oom.pt`: the trainer intentionally does not create one,
+because CUDA OOM may interrupt a multi-parameter update. Resume the newest prior
+scheduled checkpoint and reduce the memory load, for example:
+
+```bash
+python trainer/train.py --data /data/scene \
+  --resume trainer/runs/scene/checkpoints/step-005000.pt \
+  --iterations 30000 --downscale 4 --max-gaussians 1000000
+```
+
+Use a shorter `--checkpoint-every` interval when the cost of repeating work is
+more important than checkpoint I/O and storage.
 
 ## Reference material
 - CUDA itself → freeCodeCamp CUDA Course (Elliot Arledge), still `[TODO]` in your Skill.txt.
